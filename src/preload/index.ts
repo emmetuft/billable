@@ -1,9 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { IPC, type TimekeeperApi } from '../shared/ipc';
+import { IPC, type BillableApi } from '../shared/ipc';
 import type { MonitorStatus } from '../shared/types';
 
 /** The only bridge between the sandboxed renderer and the main process. */
-const api: TimekeeperApi = {
+const api: BillableApi = {
   getStatus: () => ipcRenderer.invoke(IPC.getStatus),
   pause: () => ipcRenderer.invoke(IPC.pause),
   resume: () => ipcRenderer.invoke(IPC.resume),
@@ -41,4 +41,4 @@ const api: TimekeeperApi = {
   deleteAllActivity: () => ipcRenderer.invoke(IPC.deleteAllActivity),
 };
 
-contextBridge.exposeInMainWorld('timekeeper', api);
+contextBridge.exposeInMainWorld('billable', api);

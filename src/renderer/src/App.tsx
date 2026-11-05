@@ -14,7 +14,7 @@ const LABELS: Record<Page, string> = {
   matters: 'Matters',
   settings: 'Settings',
 };
-const api = window.timekeeper;
+const api = window.billable;
 
 export function App() {
   const [page, setPage] = useState<Page>('timeline');

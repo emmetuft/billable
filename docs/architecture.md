@@ -19,7 +19,7 @@ src/
 │   ├── ipc.ts         Zod-validated IPC handlers
 │   ├── tray.ts        Menu-bar/tray controls
 │   └── index.ts       App lifecycle, window, power events
-├── preload/           contextBridge → window.timekeeper
+├── preload/           contextBridge → window.billable
 └── renderer/          React UI (timeline, matters, settings)
 ```
 
@@ -124,7 +124,7 @@ fabricated activity can never be stored as real.
 - **Process name vs display name.** Many apps (VS Code, Slack, Teams, this app in dev) are
   Electron apps whose executable is named `Electron`. The adapter records `displayedName` (e.g.
   "Code") and keeps the process name only for exclusion matching. The app's own windows are
-  labelled "AI Timekeeper".
+  labelled "Billable".
 - **`windows[0]` is not the active window.** Apps such as VS Code keep invisible helper windows
   (subrole `AXUnknown`, empty title) ahead of the real one.
 

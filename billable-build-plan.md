@@ -101,7 +101,7 @@ and unnecessary services.
 ## 5. Proposed repository structure
 
 ``` text
-ai-timekeeper/
+billable/
 ├── apps/
 │   └── desktop/
 │       ├── src/

@@ -10,7 +10,7 @@ import type {
 } from '../../../shared/types';
 import { errorMessage, formatDuration, formatHours, formatTime } from '../format';
 
-const api = window.timekeeper;
+const api = window.billable;
 
 export function shiftDate(iso: string, days: number) {
   const { startMs } = localDayRange(iso);

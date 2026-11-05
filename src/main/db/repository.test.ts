@@ -54,7 +54,7 @@ describe('database file permissions', () => {
     'keeps the database and its WAL/SHM companions owner-only (0600)',
     () => {
       const dir = mkdtempSync(join(tmpdir(), 'tk-perm-'));
-      const file = join(dir, 'timekeeper.sqlite3');
+      const file = join(dir, 'billable.sqlite3');
       try {
         const r = new Repository(openDatabase(file));
         r.upsertEvents([event()]); // forces the WAL to be written

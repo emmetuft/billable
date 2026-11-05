@@ -4,7 +4,7 @@ A local-first desktop app that helps an attorney reconstruct their workday from 
 (app, window title, timestamps and idle time) and turn it into reviewable billing entries. It assists
 with timekeeping. It never decides what is billable and never submits anything.
 
-See [`ai-timekeeper-build-plan.md`](ai-timekeeper-build-plan.md) for the full plan, plus
+See [`billable-build-plan.md`](billable-build-plan.md) for the full plan, plus
 [architecture](docs/architecture.md), [privacy & security](docs/privacy-and-security.md) and
 [billing policy](docs/billing-policy.md).
 
@@ -37,7 +37,7 @@ npm run build        # production bundle in out/
 npm run package:mac  # installer in release/ (unsigned)
 ```
 
-To run against a throwaway database: `TIMEKEEPER_DATA_DIR=/tmp/tk npm run dev`.
+To run against a throwaway database: `BILLABLE_DATA_DIR=/tmp/billable-test npm run dev`.
 
 ## Trying it
 

@@ -11,7 +11,7 @@ import type {
 import { errorMessage, formatDuration, formatTime } from '../format';
 import { DayNav } from './TimelinePage';
 
-const api = window.timekeeper;
+const api = window.billable;
 type Act = (fn: () => Promise<unknown>) => Promise<boolean>;
 
 const STATUS_LABEL: Record<EntryView['status'], string> = {

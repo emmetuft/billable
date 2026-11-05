@@ -14,7 +14,7 @@ import { createTray } from './tray';
 process.umask(0o077);
 
 // Optional isolated data directory (development, testing, demos).
-if (process.env.TIMEKEEPER_DATA_DIR) app.setPath('userData', process.env.TIMEKEEPER_DATA_DIR);
+if (process.env.BILLABLE_DATA_DIR) app.setPath('userData', process.env.BILLABLE_DATA_DIR);
 
 let mainWindow: BrowserWindow | null = null;
 let quitting = false;
@@ -86,7 +86,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('second-instance', openWindow);
 
   void app.whenReady().then(async () => {
-    const dbPath = join(app.getPath('userData'), 'timekeeper.sqlite3');
+    const dbPath = join(app.getPath('userData'), 'billable.sqlite3');
     let repo: Repository;
     try {
       repo = new Repository(openDatabase(dbPath));

@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import type { Matter, MonitorStatus } from '../../../shared/types';
 import { errorMessage } from '../format';
 
-const api = window.timekeeper;
+const api = window.billable;
 
 export function MattersPage({
   matters,

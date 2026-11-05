@@ -1,7 +1,7 @@
-import type { TimekeeperApi } from '../../shared/ipc';
+import type { BillableApi } from '../../shared/ipc';
 
 declare global {
   interface Window {
-    timekeeper: TimekeeperApi;
+    billable: BillableApi;
   }
 }

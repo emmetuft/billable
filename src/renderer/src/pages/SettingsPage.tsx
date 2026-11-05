@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { BillingPolicy, Settings } from '../../../shared/types';
 import { errorMessage } from '../format';
 
-const api = window.timekeeper;
+const api = window.billable;
 const lines = (s: string) =>
   s
     .split('\n')

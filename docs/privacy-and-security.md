@@ -32,9 +32,9 @@ without app or title metadata.
 
 ## Where data is stored
 
-- One SQLite database: `<userData>/timekeeper.sqlite3`
-  - macOS: `~/Library/Application Support/ai-timekeeper/`
-  - Windows: `%APPDATA%\ai-timekeeper\`
+- One SQLite database: `<userData>/billable.sqlite3`
+  - macOS: `~/Library/Application Support/billable/`
+  - Windows: `%APPDATA%\billable\`
 - The database and SQLite's `-wal`/`-shm` companion files are owner-only (`0600`). They are
   created that way before SQLite opens the database, so SQLite's companion files inherit it.
   The app also runs with a `077` umask, so everything else it writes (caches, logs) is private to
@@ -87,6 +87,6 @@ them. Clear or overwrite the clipboard after pasting if that matters under firm 
 ## Electron hardening
 
 - Renderer: `contextIsolation`, `sandbox`, no Node integration, and a strict Content-Security-Policy.
-- A single narrow preload bridge (`window.timekeeper`). Every IPC call is validated with Zod and
+- A single narrow preload bridge (`window.billable`). Every IPC call is validated with Zod and
   rejected unless it comes from the app's own renderer.
 - Navigation and new windows are blocked.

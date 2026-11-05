@@ -1,7 +1,7 @@
 import type { Matter, MonitorStatus } from '../../../shared/types';
 import { formatTime } from '../format';
 
-const api = window.timekeeper;
+const api = window.billable;
 const LABEL = { running: 'Monitoring on', paused: 'Paused', stopped: 'Stopped' } as const;
 
 /** Always-visible monitoring indicator and controls. */

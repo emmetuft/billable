@@ -52,8 +52,8 @@ export const IPC = {
 
 export type SessionRef = SessionSpan & { matterId: string | null };
 
-/** The API exposed to the renderer as `window.timekeeper`. */
-export interface TimekeeperApi {
+/** The API exposed to the renderer as `window.billable`. */
+export interface BillableApi {
   getStatus(): Promise<MonitorStatus>;
   pause(): Promise<MonitorStatus>;
   resume(): Promise<MonitorStatus>;
