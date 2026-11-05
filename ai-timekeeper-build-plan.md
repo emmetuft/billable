@@ -1,4 +1,4 @@
-# AI Timekeeper --- Build Plan
+# Billable --- Build Plan
 
 ## 1. Product goal
 

@@ -25,6 +25,8 @@ function createAdapter(settings: Settings): ActivityCapture {
       return new MacOSActivityCapture({
         getIdleSeconds: () => powerMonitor.getSystemIdleTime(),
         isLocked: () => powerMonitor.getSystemIdleState(1) === 'locked',
+        selfPid: process.pid,
+        selfName: 'Billable',
       });
     case 'windows':
       return new WindowsActivityCapture();
@@ -48,7 +50,7 @@ function openWindow(): void {
     height: 820,
     minWidth: 820,
     minHeight: 560,
-    title: 'AI Timekeeper',
+    title: 'Billable',
     show: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -91,7 +93,7 @@ if (!app.requestSingleInstanceLock()) {
     } catch (err) {
       // Without a database the app can't do anything useful; say why instead of idling invisibly.
       dialog.showErrorBox(
-        'AI Timekeeper could not open its database',
+        'Billable could not open its database',
         `${err instanceof Error ? err.message : String(err)}\n\nDatabase: ${dbPath}`,
       );
       app.exit(1);

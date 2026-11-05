@@ -3,7 +3,10 @@ import type { CaptureSource } from '../../shared/types';
 /** A single point-in-time observation from a platform adapter. Metadata only. */
 export interface ActivitySnapshot {
   timestamp: string; // ISO 8601
+  /** User-facing app name (e.g. "Code"), as shown in the Dock. */
   application: string;
+  /** OS process/executable name (e.g. "Electron" for VS Code); used for exclusion matching. */
+  processName?: string;
   processId?: number;
   windowTitle: string;
   browserUrl?: string;

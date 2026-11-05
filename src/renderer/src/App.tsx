@@ -33,7 +33,6 @@ export function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">AI Timekeeper</div>
         <nav>
           {(Object.keys(LABELS) as Page[]).map((p) => (
             <button

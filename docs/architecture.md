@@ -116,6 +116,22 @@ Implement `ActivityCapture` (`core/capture/types.ts`) and add a case to `createA
 Windows placeholder deliberately records nothing; the app has no simulated capture mode, so
 fabricated activity can never be stored as real.
 
+### macOS notes
+
+`main/capture/macos.ts` asks System Events for the frontmost process and its **focused window**
+(`AXFocusedWindow`, falling back to the window whose `AXMain` is true). Two pitfalls it avoids:
+
+- **Process name vs display name.** Many apps (VS Code, Slack, Teams, this app in dev) are
+  Electron apps whose executable is named `Electron`. The adapter records `displayedName` (e.g.
+  "Code") and keeps the process name only for exclusion matching. The app's own windows are
+  labelled "AI Timekeeper".
+- **`windows[0]` is not the active window.** Apps such as VS Code keep invisible helper windows
+  (subrole `AXUnknown`, empty title) ahead of the real one.
+
+The script reports `titleStatus: denied` when windows can't be read, so a missing Accessibility
+permission shows a warning instead of silently recording empty titles. To run the real System
+Events check: `MACOS_INTEGRATION=1 npx vitest run src/main/capture/macos.test.ts`.
+
 ### Windows (Milestone 6) notes
 
 Use `GetForegroundWindow` → `GetWindowTextW` + `GetWindowThreadProcessId` → process image name, and

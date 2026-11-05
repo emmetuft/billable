@@ -1,4 +1,4 @@
-# AI Timekeeper
+# Billable
 
 A local-first desktop app that helps an attorney reconstruct their workday from **metadata only**
 (app, window title, timestamps and idle time) and turn it into reviewable billing entries. It assists

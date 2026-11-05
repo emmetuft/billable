@@ -16,8 +16,10 @@ function hostOf(url: string): string | null {
 
 /** Case-insensitive match. Excluded snapshots are recorded with no application/title metadata. */
 export function isExcluded(snapshot: ActivitySnapshot, rules: ExclusionRules): boolean {
-  const app = snapshot.application.toLowerCase();
-  if (rules.excludedApplications.some((a) => app === a.toLowerCase())) return true;
+  const names = [snapshot.application, snapshot.processName ?? '']
+    .filter(Boolean)
+    .map((n) => n.toLowerCase());
+  if (rules.excludedApplications.some((a) => names.includes(a.toLowerCase()))) return true;
 
   const title = `${snapshot.windowTitle} ${snapshot.browserTabTitle ?? ''}`.toLowerCase();
   if (rules.excludedTitleKeywords.some((k) => title.includes(k.toLowerCase()))) return true;

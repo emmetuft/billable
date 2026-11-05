@@ -44,7 +44,7 @@ export function createTray(
       : '—';
 
     tray.setImage(icon(status.state));
-    tray.setToolTip(`AI Timekeeper — ${label}`);
+    tray.setToolTip(`Billable — ${label}`);
     if (process.platform === 'darwin')
       tray.setTitle(status.state === 'running' ? ' REC' : ' Paused');
 
@@ -80,7 +80,7 @@ export function createTray(
       },
       { type: 'separator' },
       { label: 'Open daily review…', click: actions.openWindow },
-      { label: 'Quit AI Timekeeper', click: actions.quit },
+      { label: 'Quit Billable', click: actions.quit },
     ];
     tray.setContextMenu(Menu.buildFromTemplate(template));
   };
