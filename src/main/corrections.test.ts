@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { mergeSessions, reassignSession, setSessionNote, splitSessionAt } from './corrections';
 import { openDatabase, Repository } from './db/repository';
-import { buildDayView, writeSampleDay } from './dayView';
+import { seedFixtureDay } from '../test/fixtures/workday';
+import { buildDayView } from './dayView';
 
 const DAY = new Date(2026, 10, 4).getTime();
 const DAY_END = DAY + 86_400_000;
@@ -9,14 +10,14 @@ const START = DAY + (8 * 60 + 52) * 60_000;
 
 function setup() {
   const repo = new Repository(openDatabase(':memory:'));
-  writeSampleDay(repo, START);
+  seedFixtureDay(repo, START);
   const view = () => buildDayView(repo, DAY, DAY_END);
   const matter = (client: string) =>
     repo.listMatters().find((m) => m.clientName.startsWith(client))!.id;
   return { repo, view, matter };
 }
 
-describe('session corrections against the sample day', () => {
+describe('session corrections against the fixture workday', () => {
   it('reassigns an unassigned session, bills it, and can be undone', () => {
     const { repo, view, matter } = setup();
     const before = view();

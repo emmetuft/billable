@@ -46,7 +46,6 @@ export const IPC = {
   entryHistory: 'entries:history',
   getSettings: 'settings:get',
   updateSettings: 'settings:update',
-  generateSampleDay: 'dev:generate-sample-day',
   deleteActivity: 'data:delete-activity',
   deleteAllActivity: 'data:delete-all-activity',
 } as const;
@@ -86,8 +85,6 @@ export interface TimekeeperApi {
   entryHistory(id: string): Promise<EntryHistoryItem[]>;
   getSettings(): Promise<Settings>;
   updateSettings(patch: SettingsPatch): Promise<Settings>;
-  /** Writes a deterministic, clearly-labelled mock workday starting at `startMs`. */
-  generateSampleDay(startMs: number): Promise<{ events: number }>;
   deleteActivity(range: Range): Promise<{ deleted: number }>;
   deleteAllActivity(): Promise<{ deleted: number }>;
 }

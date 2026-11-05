@@ -37,7 +37,6 @@ const api: TimekeeperApi = {
   entryHistory: (id) => ipcRenderer.invoke(IPC.entryHistory, id),
   getSettings: () => ipcRenderer.invoke(IPC.getSettings),
   updateSettings: (patch) => ipcRenderer.invoke(IPC.updateSettings, patch),
-  generateSampleDay: (startMs) => ipcRenderer.invoke(IPC.generateSampleDay, startMs),
   deleteActivity: (range) => ipcRenderer.invoke(IPC.deleteActivity, range),
   deleteAllActivity: () => ipcRenderer.invoke(IPC.deleteAllActivity),
 };

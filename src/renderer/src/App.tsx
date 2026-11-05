@@ -49,13 +49,7 @@ export function App() {
       {status && <StatusBar status={status} matters={matters.filter((m) => !m.archivedAt)} />}
       <main>
         {page === 'timeline' && (
-          <TimelinePage
-            date={date}
-            setDate={setDate}
-            matters={matters}
-            status={status}
-            onMattersChanged={refreshMatters}
-          />
+          <TimelinePage date={date} setDate={setDate} matters={matters} status={status} />
         )}
         {page === 'entries' && <EntriesPage date={date} setDate={setDate} matters={matters} />}
         {page === 'matters' && (

@@ -10,14 +10,14 @@ See [`ai-timekeeper-build-plan.md`](ai-timekeeper-build-plan.md) for the full pl
 
 ## Status
 
-| Milestone                                                                     | State                                                                                                                             |
-| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Foundation: Electron, React, TS, SQLite, migrations, safe IPC              | ✅                                                                                                                                |
-| 2. Metadata recorder: mock and macOS adapters, idle, exclusions, pause/resume | ✅                                                                                                                                |
-| 3. Timeline & matters                                                         | ✅ Timeline, matter create/edit/select, reassign, split, merge, notes, undo                                                       |
-| 4. AI draft descriptions                                                      | Not started                                                                                                                       |
-| 5. Billing engine & entry review                                              | ✅ Drafts from timeline, review flags, approve/reopen/reject, adjustments, manual entries, overlap guard, TSV copy, audit history |
-| 6. Windows capture                                                            | Interface ready. Adapter is a placeholder and must be built on Windows.                                                           |
+| Milestone                                                           | State                                                                                                                             |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Foundation: Electron, React, TS, SQLite, migrations, safe IPC    | ✅                                                                                                                                |
+| 2. Metadata recorder: macOS adapter, idle, exclusions, pause/resume | ✅ (simulated capture removed; see docs/architecture.md)                                                                          |
+| 3. Timeline & matters                                               | ✅ Timeline, matter create/edit/select, reassign, split, merge, notes, undo                                                       |
+| 4. AI draft descriptions                                            | Not started                                                                                                                       |
+| 5. Billing engine & entry review                                    | ✅ Drafts from timeline, review flags, approve/reopen/reject, adjustments, manual entries, overlap guard, TSV copy, audit history |
+| 6. Windows capture                                                  | Interface ready. Adapter is a placeholder and must be built on Windows.                                                           |
 
 ## Requirements
 
@@ -41,11 +41,12 @@ To run against a throwaway database: `TIMEKEEPER_DATA_DIR=/tmp/tk npm run dev`.
 
 ## Trying it
 
-1. Launch with `npm run dev`. Capture starts in **Mock** mode, which simulates activity and is
-   clearly labelled.
-2. On **Daily timeline**, go to yesterday and click **Generate sample day**. This loads a fictional
-   workday with matter switches, idle time, a lunch gap, excluded apps and rapid app switching.
-3. On **Review entries**, click **Create drafts**, write narratives, approve, and use
+1. Launch with `npm run dev`. Monitoring does **not** start on its own: click **Start** in the
+   status bar. (Turn on _Start monitoring when the app launches_ in Settings if you want it to.)
+2. The first time, macOS asks to let the app control **System Events**. For window titles, also
+   grant **Accessibility** (System Settings → Privacy & Security → Accessibility). In dev mode the
+   entry may be listed under your terminal or "Electron".
+3. Create your matters, pick the active matter as you work, and review the day on
+   **Daily timeline**.
+4. On **Review entries**, click **Create drafts**, write narratives, approve, and use
    **Copy approved** to paste into your billing system.
-4. To record real activity on your Mac, choose **Settings → Capture source → macOS** and grant
-   Accessibility permission when prompted.

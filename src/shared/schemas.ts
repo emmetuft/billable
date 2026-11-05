@@ -14,7 +14,7 @@ export const BillingPolicySchema = z.object({
 const stringList = z.array(z.string().trim().min(1).max(200)).max(500);
 
 export const SettingsSchema = z.object({
-  captureSource: z.enum(['mock', 'macos', 'windows']),
+  captureSource: z.enum(['macos', 'windows']),
   startMonitoringOnLaunch: z.boolean(),
   pollIntervalSeconds: z.number().int().min(5).max(60),
   idleThresholdMinutes: z.number().int().min(1).max(60),
@@ -36,8 +36,9 @@ export type SettingsPatch = z.infer<typeof SettingsPatchSchema>;
  * must be confirmed against the firm's actual policy (see docs/billing-policy.md).
  */
 export const DEFAULT_SETTINGS: Settings = {
-  captureSource: 'mock',
-  startMonitoringOnLaunch: true,
+  captureSource: 'macos',
+  // Never start real capture before the user has explicitly started it.
+  startMonitoringOnLaunch: false,
   pollIntervalSeconds: 15,
   idleThresholdMinutes: 5,
   sessionGapMinutes: 15,
@@ -63,6 +64,11 @@ export const DEFAULT_SETTINGS: Settings = {
     minimumConfidence: 0.7,
   },
 };
+
+/** Defaults for the platform the app is running on (capture source follows the OS). */
+export function defaultSettings(platform: string): Settings {
+  return { ...DEFAULT_SETTINGS, captureSource: platform === 'win32' ? 'windows' : 'macos' };
+}
 
 export function mergeSettings(base: Settings, patch: SettingsPatch): Settings {
   return SettingsSchema.parse({

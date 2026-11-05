@@ -11,7 +11,7 @@ export function StatusBar({ status, matters }: { status: MonitorStatus; matters:
     <section className={`statusbar state-${status.state}`} aria-live="polite">
       <span className="dot" aria-hidden />
       <strong>{LABEL[status.state]}</strong>
-      <span className="pill">{status.source === 'mock' ? 'Mock capture' : status.source}</span>
+      <span className="pill">{status.source === 'macos' ? 'macOS' : 'Windows'}</span>
       <span className="current" title={cur ? `${cur.application} ${cur.windowTitle}` : ''}>
         {cur
           ? `${cur.application}${cur.kind === 'active' && cur.windowTitle ? ` — ${cur.windowTitle}` : ''} · since ${formatTime(cur.startedAt)}`

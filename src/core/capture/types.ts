@@ -13,7 +13,7 @@ export interface ActivitySnapshot {
   locked?: boolean;
 }
 
-/** Platform adapter contract. Implementations: mock (core), macOS and Windows (main process). */
+/** Platform adapter contract. Implementations: macOS and Windows (main process). */
 export interface ActivityCapture {
   readonly source: CaptureSource;
   start(): Promise<void>;

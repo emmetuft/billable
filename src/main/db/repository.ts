@@ -1,6 +1,6 @@
-import { chmodSync } from 'node:fs';
+import { chmodSync, closeSync, openSync } from 'node:fs';
 import Database from 'better-sqlite3';
-import { DEFAULT_SETTINGS, SettingsSchema, type MatterInput } from '../../shared/schemas';
+import { defaultSettings, SettingsSchema, type MatterInput } from '../../shared/schemas';
 import type {
   ActivityEvent,
   Matter,
@@ -12,18 +12,24 @@ import type {
 } from '../../shared/types';
 import { migrate } from './migrations';
 
+/**
+ * Makes the database owner-only (0600) *before* SQLite opens it. SQLite creates its `-wal` and
+ * `-shm` companion files with the main file's permissions, so they inherit 0600 too. (Tightening
+ * the file after opening is too late: the companions already exist with looser permissions.)
+ * On Windows chmod is largely a no-op and the per-user %APPDATA% ACLs apply instead.
+ */
+function createPrivateDatabaseFile(file: string): void {
+  if (file === ':memory:') return;
+  closeSync(openSync(file, 'a', 0o600));
+  chmodSync(file, 0o600);
+}
+
 export function openDatabase(file: string): Database.Database {
+  createPrivateDatabaseFile(file);
   const db = new Database(file);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   migrate(db);
-  if (file !== ':memory:') {
-    try {
-      chmodSync(file, 0o600); // owner read/write only
-    } catch {
-      /* best effort; documented in docs/privacy-and-security.md */
-    }
-  }
   return db;
 }
 
@@ -122,6 +128,7 @@ export class Repository {
   constructor(
     readonly db: Database.Database,
     private readonly newId: () => string = () => crypto.randomUUID(),
+    private readonly defaults: Settings = defaultSettings(process.platform),
   ) {}
 
   // ---- activity events (observed evidence) ----
@@ -444,9 +451,9 @@ export class Repository {
   getSettings(): Settings {
     const r = this.db.prepare("SELECT value FROM settings WHERE key = 'app'").get() as
       { value: string } | undefined;
-    if (!r) return DEFAULT_SETTINGS;
-    const parsed = SettingsSchema.safeParse({ ...DEFAULT_SETTINGS, ...JSON.parse(r.value) });
-    return parsed.success ? parsed.data : DEFAULT_SETTINGS;
+    if (!r) return this.defaults;
+    const parsed = SettingsSchema.safeParse({ ...this.defaults, ...JSON.parse(r.value) });
+    return parsed.success ? parsed.data : this.defaults;
   }
 
   saveSettings(settings: Settings, now = Date.now()): void {

@@ -191,10 +191,6 @@ main {
   border-radius: 6px;
   border: 1px solid var(--border);
 }
-.banner.mock {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-}
 .banner.error {
   background: #fde8e8;
   color: #9b1c1c;

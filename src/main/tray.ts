@@ -44,12 +44,12 @@ export function createTray(
       : '—';
 
     tray.setImage(icon(status.state));
-    tray.setToolTip(`AI Timekeeper — ${label}${status.source === 'mock' ? ' (mock data)' : ''}`);
+    tray.setToolTip(`AI Timekeeper — ${label}`);
     if (process.platform === 'darwin')
       tray.setTitle(status.state === 'running' ? ' REC' : ' Paused');
 
     const template: MenuItemConstructorOptions[] = [
-      { label: `${label}${status.source === 'mock' ? ' · mock' : ''}`, enabled: false },
+      { label: `${label}`, enabled: false },
       { label: `Now: ${truncate(current, 60)}`, enabled: false },
       {
         label: `Matter: ${activeMatter ? truncate(activeMatter.displayName, 50) : 'None selected'}`,

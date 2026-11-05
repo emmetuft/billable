@@ -32,7 +32,7 @@ import {
 import { mergeSessions, reassignSession, setSessionNote, splitSessionAt } from './corrections';
 import type { CaptureService } from './capture/service';
 import type { Repository } from './db/repository';
-import { buildDayView, writeSampleDay } from './dayView';
+import { buildDayView } from './dayView';
 
 /**
  * Every handler validates its arguments with Zod before touching the database,
@@ -110,9 +110,6 @@ export function registerIpc(
     return next;
   });
 
-  handle(IPC.generateSampleDay, z.number().int(), (startMs) => ({
-    events: writeSampleDay(repo, startMs),
-  }));
   handle(IPC.deleteActivity, RangeSchema, (r) => ({
     deleted: repo.deleteEventsInRange(r.startMs, r.endMs),
   }));

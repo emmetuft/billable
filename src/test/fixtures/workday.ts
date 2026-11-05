@@ -1,21 +1,26 @@
-import type { ActivityEvent, CaptureSource } from '../../shared/types';
-import { ActivityRecorder } from './recorder';
-import type { ActivityCapture, ActivitySnapshot } from './types';
+import { isExcluded } from '../../core/capture/exclusions';
+import type { Repository } from '../../main/db/repository';
+import type { ActivityEvent, MatterPeriod } from '../../shared/types';
+import { ActivityRecorder } from '../../core/capture/recorder';
+import type { ActivitySnapshot } from '../../core/capture/types';
 
 /**
- * Deterministic, entirely fictional workday used for development on any OS.
- * Names use well-known placeholder companies (Contoso, Fabrikam) and do not refer to real matters.
+ * TEST FIXTURE ONLY — never imported by the application, never bundled, never written to a real
+ * database. A deterministic, entirely fictional workday (placeholder companies Contoso/Fabrikam)
+ * replayed through the real ActivityRecorder so capture, grouping, billing and entry tests run
+ * against realistic data: idle truncation, a sleep gap, exclusions, matter switches, rapid switching.
  */
 
-export type MockMatterKey = 'contoso' | 'fabrikam' | 'doe';
+export type FixtureMatterKey = 'contoso' | 'fabrikam' | 'doe';
 
-export const MOCK_MATTERS: Record<MockMatterKey, { clientName: string; matterName: string }> = {
-  contoso: { clientName: 'Contoso Ltd.', matterName: 'Supply Agreement Dispute' },
-  fabrikam: { clientName: 'Fabrikam, Inc.', matterName: 'Series B Financing' },
-  doe: { clientName: 'Estate of J. Doe', matterName: 'Probate Administration' },
-};
+export const FIXTURE_MATTERS: Record<FixtureMatterKey, { clientName: string; matterName: string }> =
+  {
+    contoso: { clientName: 'Contoso Ltd.', matterName: 'Supply Agreement Dispute' },
+    fabrikam: { clientName: 'Fabrikam, Inc.', matterName: 'Series B Financing' },
+    doe: { clientName: 'Estate of J. Doe', matterName: 'Probate Administration' },
+  };
 
-export interface MockStep {
+export interface FixtureStep {
   minutes: number;
   /** 'active' = foreground app; 'idle' = no input, previous app stays frontmost; 'away' = asleep/no capture. */
   mode: 'active' | 'idle' | 'away';
@@ -23,13 +28,13 @@ export interface MockStep {
   windowTitle?: string;
   browserUrl?: string;
   /** Attorney selects this matter at the start of the step (null clears). Undefined = unchanged. */
-  selectMatter?: MockMatterKey | null;
+  selectMatter?: FixtureMatterKey | null;
 }
 
 const word = (doc: string) => ({ application: 'Microsoft Word', windowTitle: `${doc} - Word` });
 const outlook = (title: string) => ({ application: 'Microsoft Outlook', windowTitle: title });
 
-export const MOCK_SCENARIO: MockStep[] = [
+export const FIXTURE_SCENARIO: FixtureStep[] = [
   { minutes: 12, mode: 'active', ...outlook('Inbox - attorney@lawfirm.example') },
   {
     minutes: 38,
@@ -89,45 +94,45 @@ export const MOCK_SCENARIO: MockStep[] = [
   { minutes: 20, mode: 'idle' },
 ];
 
-export interface MockMatterSelection {
+export interface FixtureMatterSelection {
   at: number;
-  matter: MockMatterKey | null;
+  matter: FixtureMatterKey | null;
 }
 
-export interface MockDay {
+export interface FixtureDay {
   events: ActivityEvent[];
-  matterSelections: MockMatterSelection[];
+  matterSelections: FixtureMatterSelection[];
 }
 
 /**
  * Replays the scenario through the real ActivityRecorder with a simulated clock.
  * Exercises idle truncation, sleep gaps, exclusions and dedup exactly like live capture.
  */
-export function buildMockDay(
+export function buildFixtureDay(
   startMs: number,
   opts: {
     idleThresholdSeconds: number;
     tickSeconds?: number;
     isExcluded?: (s: ActivitySnapshot) => boolean;
     newId?: () => string;
-    scenario?: MockStep[];
+    scenario?: FixtureStep[];
   },
-): MockDay {
+): FixtureDay {
   const tickMs = (opts.tickSeconds ?? 15) * 1000;
   const recorder = new ActivityRecorder({
-    source: 'mock',
+    source: 'macos',
     idleThresholdSeconds: opts.idleThresholdSeconds,
     maxGapSeconds: (tickMs / 1000) * 4,
     isExcluded: opts.isExcluded,
     newId: opts.newId,
   });
   const events = new Map<string, ActivityEvent>();
-  const matterSelections: MockMatterSelection[] = [];
-  let lastActive: MockStep | undefined;
+  const matterSelections: FixtureMatterSelection[] = [];
+  let lastActive: FixtureStep | undefined;
   let lastSnapshot: ActivitySnapshot | null = null;
   let t = startMs;
 
-  for (const step of opts.scenario ?? MOCK_SCENARIO) {
+  for (const step of opts.scenario ?? FIXTURE_SCENARIO) {
     const stepStart = t;
     const stepEnd = t + step.minutes * 60_000;
     if (step.selectMatter !== undefined) {
@@ -163,53 +168,51 @@ export function buildMockDay(
   };
 }
 
-/**
- * Live mock adapter: plays the scenario back in real time (looping), so the full
- * capture -> persistence -> timeline pipeline can run on any machine without OS permissions.
- * 'away' steps are reported as a locked screen.
- */
-export class MockActivityCapture implements ActivityCapture {
-  readonly source: CaptureSource = 'mock';
-  private startedAt = 0;
-  private readonly totalMs: number;
-
-  constructor(
-    private readonly scenario: MockStep[] = MOCK_SCENARIO,
-    private readonly now: () => number = Date.now,
-  ) {
-    this.totalMs = scenario.reduce((sum, s) => sum + s.minutes * 60_000, 0);
+/** Seeds a test repository with the fixture workday plus its fictional matters and selections. */
+export function seedFixtureDay(repo: Repository, startMs: number): number {
+  const settings = repo.getSettings();
+  const day = buildFixtureDay(startMs, {
+    idleThresholdSeconds: settings.idleThresholdMinutes * 60,
+    isExcluded: (s) => isExcluded(s, settings),
+  });
+  const last = day.events.at(-1);
+  if (!last) return 0;
+  if (repo.eventsInRange(startMs, last.endedAt).length > 0) {
+    throw new Error(
+      'Activity already exists in that time window. Delete it first or pick another day.',
+    );
   }
 
-  async start(): Promise<void> {
-    this.startedAt = this.now();
-  }
+  const ids = new Map<FixtureMatterKey, string>();
+  const idFor = (key: FixtureMatterKey) => {
+    const spec = FIXTURE_MATTERS[key];
+    const id =
+      ids.get(key) ??
+      (
+        repo
+          .listMatters(true)
+          .find((m) => m.clientName === spec.clientName && m.matterName === spec.matterName) ??
+        repo.createMatter({ ...spec, keywords: [key] })
+      ).id;
+    ids.set(key, id);
+    return id;
+  };
 
-  async stop(): Promise<void> {}
+  const periods: MatterPeriod[] = [];
+  day.matterSelections.forEach((sel, i) => {
+    if (!sel.matter) return;
+    const next = day.matterSelections[i + 1];
+    periods.push({
+      id: crypto.randomUUID(),
+      matterId: idFor(sel.matter),
+      startedAt: sel.at,
+      endedAt: next ? next.at : last.endedAt,
+    });
+  });
 
-  async getCurrentActivity(): Promise<ActivitySnapshot | null> {
-    const now = this.now();
-    let offset = (now - this.startedAt) % this.totalMs;
-    let lastActive: MockStep | undefined;
-    for (const step of this.scenario) {
-      const len = step.minutes * 60_000;
-      if (offset < len) {
-        const src = step.mode === 'active' ? step : lastActive;
-        return {
-          timestamp: new Date(now).toISOString(),
-          application: src?.application ?? 'Finder',
-          windowTitle: src?.windowTitle ?? '',
-          browserUrl: src?.browserUrl,
-          idleSeconds: step.mode === 'active' ? 1 : offset / 1000,
-          locked: step.mode === 'away',
-        };
-      }
-      offset -= len;
-      if (step.mode === 'active') lastActive = step;
-    }
-    return null;
-  }
-
-  getWarning(): string | null {
-    return 'Mock capture: showing simulated activity, not your real computer use.';
-  }
+  repo.db.transaction(() => {
+    repo.upsertEvents(day.events);
+    repo.insertMatterPeriods(periods);
+  })();
+  return day.events.length;
 }

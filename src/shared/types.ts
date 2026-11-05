@@ -3,7 +3,7 @@
  * All timestamps are UTC epoch milliseconds; convert to local time only for display.
  */
 
-export type CaptureSource = 'mock' | 'macos' | 'windows';
+export type CaptureSource = 'macos' | 'windows';
 
 /** active = observed foreground work; idle = no input / screen locked; excluded = privacy-excluded app/site. */
 export type EventKind = 'active' | 'idle' | 'excluded';
@@ -160,7 +160,6 @@ export interface DayView {
   sessionBilling: SessionBilling[];
   matterBilling: MatterBilling[];
   totals: { activeMs: number; idleMs: number; excludedMs: number; unassignedActiveMs: number };
-  containsMockData: boolean;
 }
 
 // ---- Milestone 5: time entries ----

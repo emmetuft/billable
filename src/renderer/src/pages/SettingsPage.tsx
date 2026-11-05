@@ -56,7 +56,6 @@ export function SettingsPage() {
             value={s.captureSource}
             onChange={(e) => set('captureSource', e.target.value as Settings['captureSource'])}
           >
-            <option value="mock">Mock (simulated activity, for development)</option>
             <option value="macos">
               macOS (real metadata; needs Accessibility permission for window titles)
             </option>

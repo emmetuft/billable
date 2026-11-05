@@ -17,7 +17,7 @@ const ev = (startMin: number, mins: number, p: Partial<ActivityEvent> = {}): Act
   browserUrl: null,
   browserTabTitle: null,
   idleSeconds: 0,
-  source: 'mock',
+  source: 'macos',
   ...p,
 });
 const period = (matterId: string, startMin: number, endMin: number | null): MatterPeriod => ({

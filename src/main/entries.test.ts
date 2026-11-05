@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { mergeSettings } from '../shared/schemas';
 import { reassignSession, splitSessionAt } from './corrections';
 import { openDatabase, Repository } from './db/repository';
-import { buildDayView, writeSampleDay } from './dayView';
+import { seedFixtureDay } from '../test/fixtures/workday';
+import { buildDayView } from './dayView';
 import {
   approveEntry,
   copyEntries,
@@ -22,7 +23,7 @@ const START = DAY + (8 * 60 + 52) * 60_000;
 
 function setup() {
   const repo = new Repository(openDatabase(':memory:'));
-  writeSampleDay(repo, START);
+  seedFixtureDay(repo, START);
   generateDrafts(repo, DATE);
   const list = () => listEntries(repo, DATE);
   const matter = (c: string) => repo.listMatters().find((m) => m.clientName.startsWith(c))!.id;
@@ -52,7 +53,7 @@ describe('drafting from the timeline', () => {
 
   it('starts the narrative from the attorney’s timeline note, never invented text', () => {
     const repo = new Repository(openDatabase(':memory:'));
-    writeSampleDay(repo, START);
+    seedFixtureDay(repo, START);
     expect(listEntries(repo, DATE).entries).toHaveLength(0);
     generateDrafts(repo, DATE);
     expect(listEntries(repo, DATE).entries.every((e) => e.description === '')).toBe(true);
@@ -63,7 +64,7 @@ describe('drafting from the timeline', () => {
     repo.saveSettings(
       mergeSettings(repo.getSettings(), { billingPolicy: { allowTaskAggregation: true } }),
     );
-    writeSampleDay(repo, START);
+    seedFixtureDay(repo, START);
     generateDrafts(repo, DATE);
     expect(listEntries(repo, DATE).entries).toHaveLength(2);
   });

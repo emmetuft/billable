@@ -35,8 +35,10 @@ without app or title metadata.
 - One SQLite database: `<userData>/timekeeper.sqlite3`
   - macOS: `~/Library/Application Support/ai-timekeeper/`
   - Windows: `%APPDATA%\ai-timekeeper\`
-- File permissions are set to owner-only (`0600`) on macOS. On Windows, the per-user `%APPDATA%`
-  ACLs apply.
+- The database and SQLite's `-wal`/`-shm` companion files are owner-only (`0600`). They are
+  created that way before SQLite opens the database, so SQLite's companion files inherit it.
+  The app also runs with a `077` umask, so everything else it writes (caches, logs) is private to
+  the user too. On Windows, `chmod` has little effect and the per-user `%APPDATA%` ACLs apply.
 - **Limitation:** the database is **not encrypted at rest** in this version. Rely on full-disk
   encryption (FileVault / BitLocker), which the firm should require anyway. SQLCipher or OS-keychain-
   wrapped keys are candidates for a later milestone.
@@ -50,6 +52,8 @@ the firm has approved. A vendor's "no training" statement alone is not approval.
 
 ## Controls
 
+- Monitoring never starts on its own after installation: the user must click **Start**. Starting
+  automatically at launch is an opt-in setting.
 - A monitoring indicator is always visible in the menu bar/tray and in the app's status bar.
 - Pause/resume and quit are available from the tray and the app.
 - Closing the window does **not** stop monitoring. The app keeps running in the tray, and you quit

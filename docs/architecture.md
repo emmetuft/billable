@@ -8,14 +8,14 @@ I/O-free and unit-tested.
 src/
 ├── shared/            Types, Zod schemas, IPC contract (used by every process)
 ├── core/              Pure logic, no Electron, no I/O
-│   ├── capture/       ActivityCapture interface, ActivityRecorder, exclusions, mock adapter + scenario
+│   ├── capture/       ActivityCapture interface, ActivityRecorder, exclusions
 │   ├── grouping/      Events → work sessions
 │   ├── billing/       Rounding, overlap union, per-matter billing preview
 │   └── time.ts        Local-day boundaries (DST-safe)
 ├── main/              Electron main process
 │   ├── capture/       macOS adapter, Windows placeholder, CaptureService (polling loop)
 │   ├── db/            better-sqlite3, migrations, Repository
-│   ├── dayView.ts     Assembles the timeline view; writes the sample day
+│   ├── dayView.ts     Assembles the timeline view
 │   ├── ipc.ts         Zod-validated IPC handlers
 │   ├── tray.ts        Menu-bar/tray controls
 │   └── index.ts       App lifecycle, window, power events
@@ -27,7 +27,7 @@ src/
 
 ```text
 Platform adapter ──snapshot──▶ ActivityRecorder ──changed events──▶ Repository (SQLite)
- (mock / macOS / Windows)       (dedup, idle, gaps)                       │
+ (macOS / Windows)              (dedup, idle, gaps)                       │
                                                                           ▼
 Renderer ◀──DayView── buildDayView: clip to day → groupSessions → billSessions
 ```
@@ -113,7 +113,8 @@ plan's `work_session_id`, since session IDs aren't durable.
 
 Implement `ActivityCapture` (`core/capture/types.ts`) and add a case to `createAdapter` in
 `main/index.ts`. The adapter returns `ActivitySnapshot`s and should never fabricate data. The
-Windows placeholder deliberately returns nothing rather than falling back to mock data.
+Windows placeholder deliberately records nothing; the app has no simulated capture mode, so
+fabricated activity can never be stored as real.
 
 ### Windows (Milestone 6) notes
 
@@ -132,3 +133,22 @@ enhancement. `browserUrl` and `browserTabTitle` are already optional throughout 
 `npm test` runs Vitest with `TZ=America/New_York`, so DST cases are deterministic. The
 `better-sqlite3` prebuilt binary is N-API, so repository tests run in plain Node against
 `:memory:` databases.
+
+Tests that need a realistic day use `src/test/fixtures/workday.ts`: a deterministic, fictional
+workday replayed through the real `ActivityRecorder`. It is **test-only**: nothing in the app
+imports it, so it is never bundled and can't write to a real database.
+
+### Why there is no mock capture mode
+
+The plan suggested a `MockActivityCapture` so the workflow could be built on a Mac without
+Windows. It was used for Milestones 1–5, then removed from the product once real macOS capture
+was working, so simulated activity can never be confused with real time. The schema only accepts
+`macos` and `windows` as event sources.
+
+## Database migrations
+
+`src/main/db/migrations.ts` holds a single initial migration. No database has been deployed, so
+during development the schema is edited in place: delete your local database after changing it.
+The runner refuses a database whose recorded migrations don't match the build, with a message
+saying to delete it. Once the app is installed on a real user's machine, migrations become
+**append-only**: never edit a shipped migration; add a new one.

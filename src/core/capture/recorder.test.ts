@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ActivityEvent } from '../../shared/types';
 import { isExcluded } from './exclusions';
-import { buildMockDay, MOCK_SCENARIO, MockActivityCapture } from './mock';
+import { buildFixtureDay, FIXTURE_SCENARIO } from '../../test/fixtures/workday';
 import { ActivityRecorder } from './recorder';
 import type { ActivitySnapshot } from './types';
 
@@ -11,7 +11,7 @@ const T0 = Date.UTC(2026, 10, 5, 14, 0, 0);
 function setup(isExcludedFn?: (s: ActivitySnapshot) => boolean) {
   let n = 0;
   const recorder = new ActivityRecorder({
-    source: 'mock',
+    source: 'macos',
     idleThresholdSeconds: 300,
     maxGapSeconds: 60,
     isExcluded: isExcludedFn,
@@ -147,33 +147,24 @@ describe('isExcluded', () => {
   });
 });
 
-describe('mock capture', () => {
-  it('builds the same day deterministically', () => {
+describe('recorder over a full fixture workday', () => {
+  it('is deterministic', () => {
     const mk = () => {
       let n = 0;
-      return buildMockDay(T0, { idleThresholdSeconds: 300, newId: () => `m${++n}` });
+      return buildFixtureDay(T0, { idleThresholdSeconds: 300, newId: () => `m${++n}` });
     };
     expect(mk()).toEqual(mk());
   });
 
-  it('produces non-overlapping, ordered events with explicit idle and no work during "away"', () => {
-    const { events, matterSelections } = buildMockDay(T0, { idleThresholdSeconds: 300 });
+  it('produces non-overlapping, ordered events with explicit idle and no work while asleep', () => {
+    const { events, matterSelections } = buildFixtureDay(T0, { idleThresholdSeconds: 300 });
     for (let i = 1; i < events.length; i++) {
       expect(events[i]!.startedAt).toBeGreaterThanOrEqual(events[i - 1]!.endedAt);
     }
     expect(events.some((e) => e.kind === 'idle')).toBe(true);
     expect(matterSelections.map((m) => m.matter)).toEqual(['contoso', 'fabrikam', null, 'contoso']);
-    const awayStart = T0 + MOCK_SCENARIO.slice(0, 9).reduce((n, s) => n + s.minutes, 0) * 60 * S;
+    const awayStart = T0 + FIXTURE_SCENARIO.slice(0, 9).reduce((n, s) => n + s.minutes, 0) * 60 * S;
     const awayEnd = awayStart + 50 * 60 * S;
     expect(events.some((e) => e.startedAt < awayEnd && e.endedAt > awayStart + 60 * S)).toBe(false);
-  });
-
-  it('live mock replays the scenario against the clock', async () => {
-    let now = T0;
-    const cap = new MockActivityCapture(MOCK_SCENARIO, () => now);
-    await cap.start();
-    expect((await cap.getCurrentActivity())!.application).toBe('Microsoft Outlook');
-    now += 13 * 60 * S;
-    expect((await cap.getCurrentActivity())!.application).toBe('Microsoft Word');
   });
 });

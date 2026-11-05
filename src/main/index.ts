@@ -1,6 +1,5 @@
 import { join } from 'node:path';
-import { app, BrowserWindow, powerMonitor, shell, type IpcMainInvokeEvent } from 'electron';
-import { MockActivityCapture } from '../core/capture/mock';
+import { app, BrowserWindow, dialog, powerMonitor, shell, type IpcMainInvokeEvent } from 'electron';
 import type { ActivityCapture } from '../core/capture/types';
 import { IPC } from '../shared/ipc';
 import type { Settings } from '../shared/types';
@@ -11,6 +10,9 @@ import { openDatabase, Repository } from './db/repository';
 import { registerIpc } from './ipc';
 import { createTray } from './tray';
 
+// Everything the app writes (database, caches, logs) is private to the current user.
+process.umask(0o077);
+
 // Optional isolated data directory (development, testing, demos).
 if (process.env.TIMEKEEPER_DATA_DIR) app.setPath('userData', process.env.TIMEKEEPER_DATA_DIR);
 
@@ -19,8 +21,6 @@ let quitting = false;
 
 function createAdapter(settings: Settings): ActivityCapture {
   switch (settings.captureSource) {
-    case 'mock':
-      return new MockActivityCapture();
     case 'macos':
       return new MacOSActivityCapture({
         getIdleSeconds: () => powerMonitor.getSystemIdleTime(),
@@ -85,7 +85,18 @@ if (!app.requestSingleInstanceLock()) {
 
   void app.whenReady().then(async () => {
     const dbPath = join(app.getPath('userData'), 'timekeeper.sqlite3');
-    const repo = new Repository(openDatabase(dbPath));
+    let repo: Repository;
+    try {
+      repo = new Repository(openDatabase(dbPath));
+    } catch (err) {
+      // Without a database the app can't do anything useful; say why instead of idling invisibly.
+      dialog.showErrorBox(
+        'AI Timekeeper could not open its database',
+        `${err instanceof Error ? err.message : String(err)}\n\nDatabase: ${dbPath}`,
+      );
+      app.exit(1);
+      return;
+    }
 
     // Never carry a matter selection across restarts: avoids silent misattribution.
     if (repo.openMatterPeriod()) repo.setActiveMatter(null);

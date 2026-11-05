@@ -1,8 +1,11 @@
+import { mkdtempSync, rmSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SETTINGS, mergeSettings } from '../../shared/schemas';
+import { DEFAULT_SETTINGS, defaultSettings, mergeSettings } from '../../shared/schemas';
 import type { ActivityEvent } from '../../shared/types';
 import Database from 'better-sqlite3';
-import { migrate, MIGRATIONS } from './migrations';
+import { migrate } from './migrations';
 import { openDatabase, Repository } from './repository';
 
 const T0 = Date.UTC(2026, 10, 5, 14, 0, 0);
@@ -17,7 +20,7 @@ const event = (p: Partial<ActivityEvent> = {}): ActivityEvent => ({
   browserUrl: null,
   browserTabTitle: null,
   idleSeconds: 0,
-  source: 'mock',
+  source: 'macos',
   ...p,
 });
 
@@ -32,19 +35,45 @@ describe('migrations', () => {
     expect(migrate(r.db)).toEqual([]);
   });
 
-  it('upgrade an existing v1 database without losing data', () => {
+  it('only allows real capture sources in the schema', () => {
+    const r = repo();
+    expect(() => r.upsertEvents([event({ source: 'mock' as never })])).toThrow(/CHECK constraint/);
+  });
+
+  it('refuses a database created by an incompatible development build', () => {
     const db = new Database(':memory:');
     db.exec(`CREATE TABLE schema_migrations (
       version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at INTEGER NOT NULL)`);
-    db.exec(MIGRATIONS[0]!.sql);
-    db.prepare("INSERT INTO schema_migrations VALUES (1, 'initial', 0)").run();
-    const v1 = new Repository(db);
-    v1.upsertEvents([event()]);
+    db.prepare("INSERT INTO schema_migrations VALUES (2, 'session_corrections', 0)").run();
+    expect(() => migrate(db)).toThrow(/incompatible development build.*2 session_corrections/);
+  });
+});
 
-    expect(migrate(db)).toEqual([2, 3]);
-    const r = new Repository(db);
-    expect(r.eventsInRange(T0 - 1, T0 + 10_000)).toHaveLength(1);
-    expect(r.correctionsInRange(T0 - 1, T0 + 10_000)).toEqual([]);
+describe('database file permissions', () => {
+  it.skipIf(process.platform === 'win32')(
+    'keeps the database and its WAL/SHM companions owner-only (0600)',
+    () => {
+      const dir = mkdtempSync(join(tmpdir(), 'tk-perm-'));
+      const file = join(dir, 'timekeeper.sqlite3');
+      try {
+        const r = new Repository(openDatabase(file));
+        r.upsertEvents([event()]); // forces the WAL to be written
+        for (const f of [file, `${file}-wal`, `${file}-shm`]) {
+          expect({ f, mode: (statSync(f).mode & 0o777).toString(8) }).toEqual({ f, mode: '600' });
+        }
+        r.db.close();
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    },
+  );
+});
+
+describe('settings defaults', () => {
+  it('never starts capture before the user does, and follows the platform', () => {
+    expect(DEFAULT_SETTINGS.startMonitoringOnLaunch).toBe(false);
+    expect(defaultSettings('darwin').captureSource).toBe('macos');
+    expect(defaultSettings('win32').captureSource).toBe('windows');
   });
 });
 

@@ -40,13 +40,11 @@ export function TimelinePage({
   setDate,
   matters,
   status,
-  onMattersChanged,
 }: {
   date: string;
   setDate: (d: string) => void;
   matters: Matter[];
   status: MonitorStatus | null;
-  onMattersChanged: () => void;
 }) {
   const [day, setDay] = useState<DayView | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -78,16 +76,6 @@ export function TimelinePage({
     };
   }, [range, status]);
 
-  const generateSample = async () => {
-    try {
-      await api.generateSampleDay(range.startMs + (8 * 60 + 52) * 60_000);
-      onMattersChanged();
-      await load();
-    } catch (err) {
-      setError(errorMessage(err));
-    }
-  };
-
   /** Runs a correction, then reloads the day; errors surface in the banner. */
   const act = useCallback(
     async (fn: () => Promise<unknown>) => {
@@ -113,12 +101,6 @@ export function TimelinePage({
       <div className="toolbar">
         <DayNav date={date} setDate={setDate} />
         <span className="spacer" />
-        <button
-          onClick={generateSample}
-          title="Writes a fictional, clearly-labelled sample workday"
-        >
-          Generate sample day
-        </button>
         {day && day.events.length > 0 && (
           <button className="danger" onClick={deleteDay}>
             Delete day
@@ -127,19 +109,14 @@ export function TimelinePage({
       </div>
 
       {error && <div className="banner error">{error}</div>}
-      {day?.containsMockData && (
-        <div className="banner mock">
-          This day contains <strong>mock activity</strong> generated for development. It does not
-          reflect real work.
-        </div>
-      )}
 
       {day && day.events.length === 0 && (
         <div className="empty">
           <p>No activity recorded for this day.</p>
           <p className="muted">
-            Start monitoring from the bar above, or use <em>Generate sample day</em> to explore the
-            workflow with fictional data.
+            {status?.state === 'running'
+              ? 'Monitoring is on. Activity will appear here as you work.'
+              : 'Start monitoring from the bar above to record your work.'}
           </p>
         </div>
       )}
